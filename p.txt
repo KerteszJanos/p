@@ -1,0 +1,248 @@
+1_fel.php
+--------------------------------------------------------------------------------------------------------------
+<?php
+header("Content-Type: application/json");
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "telefon_adatbazis"; //adatbazis neve
+
+$conn = new mysqli($servername, $username, $password, $dbname);
+
+if ($conn->connect_error) {
+  http_response_code(500);
+  die(json_encode(array("error" => $conn->connect_error)));
+}
+
+$request = isset($_SERVER['PATH_INFO']) ? explode('/', trim($_SERVER['PATH_INFO'],'/')) : [];
+
+$action = preg_replace('/[^a-z0-9_]+/i','',array_shift($request));
+
+$id = array_shift($request);
+
+if($action == "get") {
+  if(is_null($id)) {
+    $sql = "SELECT * FROM telefonok";
+    $result = $conn->query($sql);
+    $rows = array();
+    while($r = $result->fetch_assoc()) {
+      $rows[] = $r;
+    }
+    echo json_encode($rows);
+  } else {
+    $sql = "SELECT * FROM telefonok WHERE id = ".$id;
+    $result = $conn->query($sql);
+    if($result->num_rows > 0) {
+      echo json_encode($result->fetch_assoc());
+    } else {
+      http_response_code(404);
+      echo json_encode(array("error" => "Nincs ilyen azonosĂ­tĂłjĂş telefon."));
+    }
+  }
+}
+$conn->close();
+?>
+--------------------------------------------------------------------------------------------------------------
+2_fel.html/style.css
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <title>Webshop</title>
+</head>
+<body>
+
+    <header>
+        <h1>Ceg</h1>
+        <nav>
+            <ul>
+                <li><a href="#termekek">TermĂŠkek</a></li>
+                <li><a href="#rolunk">RĂłlunk</a></li>
+                <li><a href="#elerhetoseg">ElĂŠrhetĹsĂŠg</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section id="termekek">
+            <h2>Termekeink</h2>
+            <div class="container">
+                <div class="box">Box 1</div>
+                <div class="box">Box 2</div>
+                <div class="box">Box 3</div>
+                <div class="box">Box 4</div>
+                <div class="box">Box 5</div>
+                <div class="box">Box 6</div>
+                <div class="box">Box 7</div>
+                <div class="box">Box 8</div>
+                <div class="box">Box 9</div>
+                <div class="box" style="border: 0px"></div>
+            </div>
+        </section>
+
+        <section id="rolunk">
+            <h2>Rolunk</h2>
+            <p>Lorem ipsum...</p>
+        </section>
+
+        <section id="elerhetoseg">
+            <h2>Elerhetoseg</h2>
+            <p>Lorem ipsum...</p>
+        </section>
+    </main>
+
+    <footer>
+        <p>Ceg 2023</p>
+    </footer>
+
+</body>
+</html>
+----------------------------------------
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    background-color: #f8f8f8;
+    padding: 20px;
+    text-align: center;
+}
+
+nav ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+nav ul li {
+    display: inline;
+    margin-right: 10px;
+}
+
+nav ul li a {
+    text-decoration: none;
+    color: #333;
+}
+
+section {
+    padding: 20px;
+}
+
+footer {
+    background-color: #f8f8f8;
+    padding: 20px;
+    text-align: center;
+}
+
+.termek {
+    border: 1px solid #000000;
+    padding: 10px;
+    margin-bottom: 20px;
+}
+
+.container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+}
+
+.box {
+    border: 1px solid black;
+    margin: 10px;
+    padding: 10px;
+}
+
+@media (min-width: 768px) {
+    .box {
+        flex: 1 0 30%;
+    }
+}
+
+@media (max-width: 767px) and (min-width: 480px) {
+    .box {
+        flex: 1 0 45%;
+    }
+}
+
+@media (max-width: 479px) {
+    .box {
+        flex: 1 0 90%;
+    }
+}
+--------------------------------------------------------------------------------------------------------------
+3_fel (komplex)
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <title>Webshop</title>
+    <script>
+        var data;
+        async function loadData() 
+        {
+          var response = await fetch("/1_feladat.php/get");
+          data = await response.json();
+          console.log(data);
+          var inner = "";
+          var i = 0;
+          await data.forEach(element => {
+            inner += '<div class="box">'+
+                    "<p>Gyarto:"+element.gyarto+"</p>"+
+                    "<p>Modell:"+element.modell+"</p>"+
+                    "<p>Spec: "+element.specifikaciok+"</p>"+
+                    '</div>'
+            i++;
+          });
+          if(i % 3 == 1)
+          {
+              inner += '<div class="box" style="border:0px"></div>';
+              inner += '<div class="box" style="border:0px"></div>';
+          }
+          else if (i % 3 == 2)
+          {
+              inner += '<div class="box" style="border:0px"></div>';
+          }
+          document.getElementById("content").innerHTML = inner;
+        }
+    </script>
+</head>
+<body onload="loadData()">
+    <header>
+        <h1>Ceg</h1>
+        <nav>
+            <ul>
+                <li><a href="#termekek">Termekek</a></li>
+                <li><a href="#rolunk">Rolunk</a></li>
+                <li><a href="#elerhetoseg">Elerhetoseg</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section id="termekek">
+            <h2>Termekeink</h2>
+            <div class="container" id="content">
+            </div>
+        </section>
+
+        <section id="rolunk">
+            <h2>Rolunk</h2>
+            <p>Lorem ipsum...</p>
+        </section>
+
+        <section id="elerhetoseg">
+            <h2>Elerhetoseg</h2>
+            <p>Lorem ipsum...</p>
+        </section>
+    </main>
+
+    <footer>
+        <p>Ceg 2023</p>
+    </footer>
+</body>
+</html>
